@@ -19,6 +19,7 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms, models
 from torch.utils.tensorboard import SummaryWriter
+from PIL import Image, UnidentifiedImageError # Added imports
 import os
 import time
 
@@ -115,7 +116,25 @@ base_transform = transforms.Compose([
     # ToTensor() 和 Normalize() 將由 train/val transform 各自處理
 ])
 
-full_dataset_pil = datasets.ImageFolder(data_dir, transform=base_transform)
+def is_valid_image_file(path: str) -> bool:
+    """
+    檢查給定的路徑是否為有效的圖片檔案。
+    如果圖片無法開啟或驗證，則印出警告並回傳 False。
+    """
+    try:
+        img = Image.open(path)
+        img.verify()  # verify() 會檢查圖片是否損毀，但不會載入圖片資料
+        # img.load() # 如果需要更徹底的檢查，可以取消註解此行，它會載入圖片資料
+        return True
+    except (UnidentifiedImageError, IOError, OSError) as e:
+        print(f"Warning: Skipping corrupted, unidentifiable or problematic image file: {path} (Error: {e})")
+        return False
+
+full_dataset_pil = datasets.ImageFolder(
+    data_dir,
+    transform=base_transform,
+    is_valid_file=is_valid_image_file  # 加入檔案有效性檢查
+)
 train_dataset_pil, val_dataset_pil = torch.utils.data.random_split(full_dataset_pil, [train_size, val_size])
 
 train_dataset_transformed = DatasetWithTransform(train_dataset_pil, transform=data_transforms['train'])
