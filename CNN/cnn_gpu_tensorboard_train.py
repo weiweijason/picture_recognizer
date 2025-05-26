@@ -103,7 +103,7 @@ def is_valid_image_file(path: str) -> bool:
     try:
         img = Image.open(path)
         img.verify()  # verify() 會檢查圖片是否損毀，但不會載入圖片資料
-        # img.load() # 如果需要更徹底的檢查，可以取消註解此行，它會載入圖片資料
+        img.load() # 如果需要更徹底的檢查，可以取消註解此行，它會載入圖片資料
         return True
     except (UnidentifiedImageError, IOError, OSError) as e:
         print(f"Warning: Skipping corrupted, unidentifiable or problematic image file: {path} (Error: {e})")
