@@ -65,27 +65,6 @@ data_transforms = {
     ]),
 }
 
-# 假設您的資料夾結構是 data/train/... 和 data/val/...
-# 如果只有一個主資料夾 data/ 包含所有類別，且您想自己切分訓練/驗證集
-# 您可以先用 datasets.ImageFolder 載入所有資料，再用 torch.utils.data.random_split 切分
-
-# 範例：假設 data/ 底下直接是類別資料夾，我們將其切分為訓練集和驗證集
-full_dataset = datasets.ImageFolder(data_dir, transform=data_transforms['train']) # 先用 train 的 transform
-
-# 計算類別數量
-class_names = full_dataset.classes
-num_classes = len(class_names)
-print(f"Found {num_classes} classes: {class_names}")
-
-if num_classes == 0:
-    print(f"Error: No classes found in {data_dir}. Please check the directory structure.")
-    exit()
-
-# 切分訓練集和驗證集 (例如 80% 訓練, 20% 驗證)
-train_size = int(0.8 * len(full_dataset))
-val_size = len(full_dataset) - train_size
-train_dataset, val_dataset = torch.utils.data.random_split(full_dataset, [train_size, val_size])
-
 # 重要：為驗證集設定正確的 transform
 # 這裡我們需要一個技巧，因為 random_split 後的 dataset subset 沒有 transform 屬性可直接修改
 # 一個方法是重新包裝 val_dataset 或在訓練迴圈中手動應用 transform
@@ -135,6 +114,32 @@ full_dataset_pil = datasets.ImageFolder(
     transform=base_transform,
     is_valid_file=is_valid_image_file  # 加入檔案有效性檢查
 )
+
+# 計算類別數量並設定訓練/驗證集大小 (基於過濾後的 full_dataset_pil)
+class_names = full_dataset_pil.classes
+num_classes = len(class_names)
+print(f"Found {num_classes} classes: {class_names}. Total valid images: {len(full_dataset_pil)}")
+
+if num_classes == 0 or len(full_dataset_pil) == 0:
+    print(f"Error: No classes found or no valid images in '{data_dir}' after filtering. Please check data and directory structure.")
+    exit()
+
+# 確保有足夠的圖片進行分割 (至少需要2張，訓練集和驗證集各一張)
+if len(full_dataset_pil) < 2:
+    print(f"Error: Not enough valid images ({len(full_dataset_pil)}) to split into training and validation sets. Need at least 2 images.")
+    exit()
+
+train_size = int(0.8 * len(full_dataset_pil))
+val_size = len(full_dataset_pil) - train_size
+
+# 確保 train_size 和 val_size 至少為 1 (因為 len(full_dataset_pil) >= 2)
+if train_size == 0: # 理論上在 len(full_dataset_pil) >= 2 時不會發生
+    train_size = 1
+    val_size = len(full_dataset_pil) - 1
+if val_size == 0: # 理論上在 len(full_dataset_pil) >= 2 時不會發生
+    val_size = 1
+    train_size = len(full_dataset_pil) - 1
+
 train_dataset_pil, val_dataset_pil = torch.utils.data.random_split(full_dataset_pil, [train_size, val_size])
 
 train_dataset_transformed = DatasetWithTransform(train_dataset_pil, transform=data_transforms['train'])
