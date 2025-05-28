@@ -41,7 +41,22 @@ class Food101Dataset(Dataset):
         label = self.dataframe.iloc[idx]['label']
         label = self.encoder.get_idx(label)
 
-        image = Image.open(img_path).convert("RGB")
+        try:
+            image = Image.open(img_path).convert("RGB")
+        except OSError as e:
+            print(f"Warning: Failed to load image {img_path}: {e}")
+            # 如果圖片載入失敗，可以返回一個標記或者跳過這個樣本
+            # 這裡我們返回 None，需要在 DataLoader 中處理這種情況
+            # 或者，可以引發一個異常，或者返回一個預設的圖片和標籤
+            # 為了簡單起見，這裡返回 None，但更好的做法是讓 Dataset 返回有效資料
+            # 並在 prepare_dataframe 中過濾掉損壞的圖片
+            # 考慮到現有結構，我們暫時返回 None，但建議後續優化
+            # 返回一個 placeholder tensor 可能更適合 DataLoader
+            # 例如: return torch.zeros((3, IMAGE_SIZE, IMAGE_SIZE)), -1 # 假設 IMAGE_SIZE 已定義
+            # 但為了最小化改動，我們先這樣處理，並在 collate_fn 中過濾
+            print(f"Skipping corrupted image: {img_path}")
+            return None # 標記為無效樣本
+
         if self.transform:
             image = self.transform(image)
 
@@ -237,15 +252,24 @@ if __name__ == "__main__":
     train_dataset = Food101Dataset(train_df, encoder, transform)
     test_dataset = Food101Dataset(test_df, encoder, transform)
 
+    # 新增 collate_fn 來過濾掉 None 的樣本 (損壞的圖片)
+    def collate_fn_skip_corrupted(batch):
+        batch = list(filter(lambda x: x is not None, batch))
+        if not batch: # 如果整個 batch 都是損壞的圖片
+            return torch.Tensor(), torch.Tensor() # 返回空的 tensor
+        return torch.utils.data.dataloader.default_collate(batch)
+
     if use_distributed:
         train_sampler = DistributedSampler(train_dataset)
         test_sampler = DistributedSampler(test_dataset)
-        train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, sampler=train_sampler)
-        test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, sampler=test_sampler)
+        # 在 DataLoader 中使用 collate_fn
+        train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, sampler=train_sampler, collate_fn=collate_fn_skip_corrupted)
+        test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, sampler=test_sampler, collate_fn=collate_fn_skip_corrupted)
         device = torch.device(f"cuda:{local_rank}")
     else:
-        train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
-        test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False)
+        # 在 DataLoader 中使用 collate_fn
+        train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True, collate_fn=collate_fn_skip_corrupted)
+        test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False, collate_fn=collate_fn_skip_corrupted)
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     num_epochs = 30
