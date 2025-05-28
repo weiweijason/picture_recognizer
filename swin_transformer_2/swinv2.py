@@ -256,7 +256,7 @@ if __name__ == "__main__":
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         print(f"使用設備: {device}")
 
-    BATCH_SIZE = args.batch_size
+    BATCH_SIZE = 128
     IMAGE_SIZE = args.image_size
     # IMAGE_ROOT = f"{args.data_root}/images" # 舊的路徑結構
     # TRAIN_FILE = f"{args.data_root}/meta/train.txt" # 不再需要
@@ -316,8 +316,8 @@ if __name__ == "__main__":
     if use_distributed:
         train_sampler = DistributedSampler(train_dataset)
         test_sampler = DistributedSampler(test_dataset)
-        train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, sampler=train_sampler)
-        test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, sampler=test_sampler)
+        train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, sampler=train_sampler, num_workers=64)
+        test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, sampler=test_sampler, num_workers=64)
         device = torch.device(f"cuda:{local_rank}")
     else:
         train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
