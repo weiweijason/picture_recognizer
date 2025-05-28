@@ -179,6 +179,7 @@ def get_model(model_name, num_classes, pretrained=True):
     return model.to(device)
 
 model = get_model(model_name, num_classes)
+print(model)
 
 # --- 損失函數和優化器 ---
 criterion = nn.CrossEntropyLoss()
