@@ -209,7 +209,7 @@ if __name__ == "__main__":
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         print(f"使用設備: {device}")
 
-    BATCH_SIZE = 32
+    BATCH_SIZE = 64
     IMAGE_SIZE = 224
     # IMAGE_ROOT = "food-101/images" # 舊的路徑
     # TRAIN_FILE = "food-101/meta/train.txt" # 舊的檔案
@@ -263,8 +263,8 @@ if __name__ == "__main__":
         train_sampler = DistributedSampler(train_dataset)
         test_sampler = DistributedSampler(test_dataset)
         # 在 DataLoader 中使用 collate_fn
-        train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, sampler=train_sampler, collate_fn=collate_fn_skip_corrupted, workers=32)
-        test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, sampler=test_sampler, collate_fn=collate_fn_skip_corrupted, workers=32)
+        train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, sampler=train_sampler, collate_fn=collate_fn_skip_corrupted, workers=64)
+        test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, sampler=test_sampler, collate_fn=collate_fn_skip_corrupted, workers=64)
         device = torch.device(f"cuda:{local_rank}")
     else:
         # 在 DataLoader 中使用 collate_fn
