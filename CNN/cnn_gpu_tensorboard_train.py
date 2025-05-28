@@ -25,7 +25,7 @@ import time
 
 # --- 設定參數 ---
 data_dir = 'data/'  # 遠端電腦上的資料路徑
-model_name = "resnet18"  # 可以選擇 "resnet18", "resnet34", "resnet50", "vgg16", 等
+model_name = "resnet50"  # 可以選擇 "resnet18", "resnet34", "resnet50", "vgg16", 等
 num_epochs = 50
 batch_size = 32
 learning_rate = 0.001
