@@ -72,8 +72,8 @@ data_transforms = {
         transforms.RandomRotation(15),  # 增加資料增強
         transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1),
         transforms.RandomVerticalFlip(p=0.05),  # ConvNeXt 對垂直翻轉較敏感，降低機率
-        transforms.RandomErasing(p=0.1),  # 隨機擦除，提高模型泛化能力
         transforms.ToTensor(),
+        transforms.RandomErasing(p=0.1),  # 隨機擦除，必須在 ToTensor() 之後
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])  # ImageNet 的標準化參數
     ]),
     'val': transforms.Compose([
