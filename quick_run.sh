@@ -24,11 +24,13 @@ show_usage() {
     echo "  convnext      - 只執行 ConvNeXt"
     echo "  all           - 執行所有模型 (預設)"
     echo "  check         - 檢查環境"
+    echo "  test          - 測試修復是否成功"
     echo ""
     echo -e "${BLUE}範例:${NC}"
     echo "  $0 efficientnet"
     echo "  $0 all"
     echo "  $0 check"
+    echo "  $0 test"
 }
 
 # 檢查環境
@@ -88,6 +90,16 @@ run_all_models() {
     bash "$PROJECT_ROOT/run_models_sequential.sh"
 }
 
+# 測試修復
+test_fix() {
+    echo -e "${YELLOW}測試深度學習腳本修復...${NC}"
+    if [ -f "$PROJECT_ROOT/test_fix.sh" ]; then
+        bash "$PROJECT_ROOT/test_fix.sh"
+    else
+        echo -e "${RED}找不到測試腳本${NC}"
+    fi
+}
+
 # 主程式
 main() {
     local option=${1:-"all"}
@@ -95,6 +107,9 @@ main() {
     case $option in
         "check")
             check_env
+            ;;
+        "test")
+            test_fix
             ;;
         "all")
             run_all_models

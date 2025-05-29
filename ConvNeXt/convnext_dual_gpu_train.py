@@ -66,6 +66,7 @@ print(f"Using image size {image_size} for {model_name}")
 
 data_transforms = {
     'train': transforms.Compose([
+        transforms.Lambda(lambda x: x.convert('RGB')),  # 確保圖片是 RGB
         transforms.RandomResizedCrop(image_size),
         transforms.RandomHorizontalFlip(),
         transforms.RandomRotation(15),  # 增加資料增強
@@ -76,6 +77,7 @@ data_transforms = {
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])  # ImageNet 的標準化參數
     ]),
     'val': transforms.Compose([
+        transforms.Lambda(lambda x: x.convert('RGB')),  # 確保圖片是 RGB
         transforms.Resize(image_size + 32),  # 通常驗證集會比訓練集大一點再裁切
         transforms.CenterCrop(image_size),
         transforms.ToTensor(),
@@ -97,10 +99,6 @@ class DatasetWithTransform(torch.utils.data.Dataset):
     def __len__(self):
         return len(self.subset)
 
-base_transform = transforms.Compose([
-    transforms.Lambda(lambda x: x.convert('RGB')),  # 確保圖片是 RGB
-])
-
 def is_valid_image_file(path: str) -> bool:
     """
     檢查給定的路徑是否為有效的圖片檔案。
@@ -116,7 +114,7 @@ def is_valid_image_file(path: str) -> bool:
 
 full_dataset_pil = datasets.ImageFolder(
     data_dir,
-    transform=base_transform,
+    transform=None,  # 移除基礎轉換，讓每個階段的轉換自己處理
     is_valid_file=is_valid_image_file  # 加入檔案有效性檢查
 )
 
