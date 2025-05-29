@@ -256,7 +256,7 @@ if __name__ == "__main__":
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         print(f"使用設備: {device}")
 
-    BATCH_SIZE = 128
+    # BATCH_SIZE = 128 # <--- 移除硬編碼的 BATCH_SIZE
     IMAGE_SIZE = args.image_size
     # IMAGE_ROOT = f"{args.data_root}/images" # 舊的路徑結構
     # TRAIN_FILE = f"{args.data_root}/meta/train.txt" # 不再需要
@@ -316,12 +316,12 @@ if __name__ == "__main__":
     if use_distributed:
         train_sampler = DistributedSampler(train_dataset)
         test_sampler = DistributedSampler(test_dataset)
-        train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, sampler=train_sampler, num_workers=64)
-        test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, sampler=test_sampler, num_workers=64)
+        train_loader = DataLoader(train_dataset, batch_size=args.batch_size, sampler=train_sampler, num_workers=64) # <--- 使用 args.batch_size
+        test_loader = DataLoader(test_dataset, batch_size=args.batch_size, sampler=test_sampler, num_workers=64) # <--- 使用 args.batch_size
         device = torch.device(f"cuda:{local_rank}")
     else:
-        train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
-        test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False)
+        train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True) # <--- 使用 args.batch_size
+        test_loader = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False) # <--- 使用 args.batch_size
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     num_epochs = args.epochs      # 選擇使用 Swin V1 或 V2
@@ -396,13 +396,13 @@ if __name__ == "__main__":
     # 記錄訓練參數 (僅在主進程)
     if is_main_process:
         with open(log_file, 'w') as f:
-            f.write(f"訓練開始時間: {timestamp}\n")
-            f.write(f"模型: {'Swin V2' if args.use_v2 else 'Swin V1'}\n")
-            f.write(f"圖像大小: {IMAGE_SIZE}\n")
-            f.write(f"批次大小: {BATCH_SIZE}\n")
-            f.write(f"輪數: {num_epochs}\n")
-            f.write(f"分散式訓練: {use_distributed}\n")
-            f.write("\n")
+            f.write(f"訓練開始時間: {timestamp}\\n")
+            f.write(f"模型: {'Swin V2' if args.use_v2 else 'Swin V1'}\\n")
+            f.write(f"圖像大小: {IMAGE_SIZE}\\n")
+            f.write(f"批次大小: {args.batch_size}\\n") # <--- 使用 args.batch_size 記錄
+            f.write(f"輪數: {num_epochs}\\n")
+            f.write(f"分散式訓練: {use_distributed}\\n")
+            f.write("\\n")
 
     # 嘗試將模型圖寫入 TensorBoard (僅在主進程)
     if is_main_process and writer:
